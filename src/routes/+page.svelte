@@ -5,10 +5,12 @@
 
 	type Game = 'waiting for input' | 'in progress' | 'game over';
 	type GameMode = 'time' | 'words' | 'quotes' | 'zen';
+	type WordMode = 'words' | 'sentences' | 'numbers';
 	type Word = string;
 
 	let game: Game = 'waiting for input';
 	let gameMode: GameMode = 'time';
+	let wordMode: WordMode = 'words';
 	let seconds = 15;
 	let timer = seconds;
 	let typedLetter = '';
@@ -160,6 +162,14 @@
 		focusInput();
 	}
 
+	function setWordMode(mode: WordMode) {
+		wordMode = mode;
+
+		getWords(wordCount);
+
+		focusInput();
+	}
+
 	function setGameTimer() {
 		function gameTimer() {
 			if (timer > 0) {
@@ -180,8 +190,9 @@
 	}
 
 	async function getWords(limit: number) {
-		const response = await fetch(`/api/words?limit=${limit}`);
+		const response = await fetch(`/api/words?mode=${wordMode}&limit=${limit}`);
 		words = await response.json();
+		console.log(words);
 	}
 
 	async function focusInput() {
@@ -222,19 +233,51 @@
 </script>
 
 {#if game !== 'game over'}
-	<div class="menu flex-row gap-4 justify-evenly" data-game={game}>
+	<div class="flex flex-row gap-2 justify-evenly text-center" data-game={game}>
 		{#if game !== 'in progress'}
-			<div>
-				<button tabindex="-1">punctuation</button>
-				<button tabindex="-1">numbers</button>
+			<div class="gap-4 w-1/4">
+				<button
+					on:click={() => setWordMode('words')}
+					class={wordMode === 'words' ? 'selected' : ''}
+					tabindex="-1">words</button
+				>
+				<button
+					on:click={() => setWordMode('sentences')}
+					class={wordMode === 'sentences' ? 'selected' : ''}
+					tabindex="-1">sentences</button
+				>
+				<button
+					on:click={() => setWordMode('numbers')}
+					class={wordMode === 'numbers' ? 'selected' : ''}
+					tabindex="-1">numbers</button
+				>
 			</div>
-			<div class="mode-selector">
-				<button on:click={() => setGameMode('time')} tabindex="-1">time</button>
-				<button on:click={() => setGameMode('words')} tabindex="-1">words</button>
-				<button on:click={() => setGameMode('quotes')} tabindex="-1">quotes</button>
-				<button on:click={() => setGameMode('zen')} tabindex="-1">zen</button>
+			<div class="gap-4 w-1/4">
+				<div class="relative">
+					<p class="text-xs w-full text-gray-100 bottom-0 absolute">Other gamemodes not implemented!!</p>
+				</div>
+				<button
+					on:click={() => setGameMode('time')}
+					class={gameMode === 'time' ? 'selected' : ''}
+					tabindex="-1">time</button
+				>
+				<button
+					on:click={() => setGameMode('words')}
+					class={gameMode === 'words' ? 'selected' : ''}
+					tabindex="-1">words</button
+				>
+				<button
+					on:click={() => setGameMode('quotes')}
+					class={gameMode === 'quotes' ? 'selected' : ''}
+					tabindex="-1">quotes</button
+				>
+				<button
+					on:click={() => setGameMode('zen')}
+					class={gameMode === 'zen' ? 'selected' : ''}
+					tabindex="-1">zen</button
+				>
 			</div>
-			<div class="time-selector">
+			<div class="gap-4 w-1/4">
 				<button on:click={() => setTime(3)} class={seconds === 3 ? 'selected' : ''} tabindex="-1"
 					>3</button
 				>
