@@ -48,7 +48,6 @@
 	h1 {
 		font-family: 'Lexend Deca', sans-serif;
 		font-size: 1.8rem;
-		color: var(--fg-200);
 		letter-spacing: 2px;
 	}
 </style>
