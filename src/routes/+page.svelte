@@ -254,7 +254,7 @@
 			</div>
 			<div class="gap-4 w-1/4">
 				<div class="relative">
-					<p class="text-xs w-full text-gray-100 bottom-0 absolute">Other gamemodes not implemented!!</p>
+					<p class="text-xs w-full text-gray-100 top-12 absolute">Only time gamemode is implemented!!</p>
 				</div>
 				<button
 					on:click={() => setGameMode('time')}

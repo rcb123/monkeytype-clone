@@ -15,6 +15,11 @@
 	</main>
 </div>
 
+<div>
+	<a class="absolute right-10 bottom-12 text-lg" href="https://github.com/rcb123/sveltype">&lt;/&gt; GitHub</a>
+	<a class="absolute right-10 bottom-5 text-lg" href="https://rezab.vercel.app/">🖥️ Portfolio</a>
+</div>
+
 <style lang="scss">
 	/* lexend-deca-regular - latin */
 	@font-face {
