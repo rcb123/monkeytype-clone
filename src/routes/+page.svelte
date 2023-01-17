@@ -268,17 +268,20 @@
 				<button
 					on:click={() => setGameMode('words')}
 					class={gameMode === 'words' ? 'selected' : ''}
-					tabindex="-1" disabled>words</button
+					tabindex="-1"
+					disabled>words</button
 				>
 				<button
 					on:click={() => setGameMode('quotes')}
 					class={gameMode === 'quotes' ? 'selected' : ''}
-					tabindex="-1" disabled>quotes</button
+					tabindex="-1"
+					disabled>quotes</button
 				>
 				<button
 					on:click={() => setGameMode('zen')}
 					class={gameMode === 'zen' ? 'selected' : ''}
-					tabindex="-1" disabled>zen</button
+					tabindex="-1"
+					disabled>zen</button
 				>
 			</div>
 			<div class="gap-4 w-1/4">

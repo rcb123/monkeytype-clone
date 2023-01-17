@@ -11,7 +11,11 @@
 <nav>
 	<h1 class="mt-10 text-center text-primary">🔥 sveltype</h1>
 
-	<select data-choose-theme class="select select-bordered w-full max-w-fit absolute top-10 right-20" tabindex="-1">
+	<select
+		data-choose-theme
+		class="select select-bordered w-full max-w-fit absolute top-10 right-20"
+		tabindex="-1"
+	>
 		<option value="light">Light</option>
 		<option value="dark">Dark</option>
 		<option value="bumblebee">Bumblebee</option>
