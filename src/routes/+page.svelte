@@ -214,6 +214,10 @@
 		if (game === 'waiting for input' && isChar) {
 			startGame();
 		}
+
+		// else if (letterIndex == words[wordIndex].length) {
+		// 	nextWord();
+		// }
 	}
 
 	function setTime(time: number) {
