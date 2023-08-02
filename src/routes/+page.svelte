@@ -13,6 +13,8 @@
 	let wordMode: WordMode = 'words';
 	let seconds = 15;
 	let timer = seconds;
+	let stopwatch = 0;
+	let wordLimit = 10;
 	let typedLetter = '';
 	let toggleReset = false;
 
@@ -34,8 +36,18 @@
 
 	function getWordsPerMinute() {
 		const word = 5;
-		const minutes = 0.5;
-		return Math.floor(correctLetters / word / minutes);
+		if (gameMode === 'time') {
+			const minutes = seconds / 60;
+			return Math.floor(correctLetters / word / minutes);
+		} else if (gameMode === 'words') {
+			const minutes = stopwatch / 60;
+			return Math.floor(correctLetters / word / minutes);
+		} else if (gameMode === 'zen') {
+			const minutes = stopwatch / 60;
+			return Math.floor(correctLetters / word / minutes);
+		} else {
+			return 999;
+		}
 	}
 
 	function getAccuracy() {
@@ -61,6 +73,7 @@
 		getWords(wordCount);
 
 		timer = seconds;
+		stopwatch = 0;
 		typedLetter = '';
 		wordIndex = 0;
 		letterIndex = 0;
@@ -125,6 +138,12 @@
 			increaseScore();
 			moveCaret();
 		}
+
+		if (gameMode === 'words') {
+			if (wordIndex === wordLimit) {
+				endGame();
+			}
+		}
 	}
 
 	function updateLine() {
@@ -151,7 +170,13 @@
 
 	function startGame() {
 		setGameState('in progress');
-		setGameTimer();
+		if (gameMode === 'time') {
+			setGameTimer();
+		} else if (gameMode === 'words') {
+			setGameStopwatch();
+		} else if (gameMode === 'zen') {
+			setGameStopwatch();
+		}
 	}
 
 	function setGameState(state: Game) {
@@ -160,15 +185,12 @@
 
 	function setGameMode(mode: GameMode) {
 		gameMode = mode;
-
 		focusInput();
 	}
 
 	function setWordMode(mode: WordMode) {
 		wordMode = mode;
-
 		getWords(wordCount);
-
 		focusInput();
 	}
 
@@ -183,12 +205,23 @@
 			}
 
 			if (timer === 0) {
-				setGameState('game over');
-				getResults();
+				endGame();
 			}
 		}
 
 		const interval = setInterval(gameTimer, 1000);
+	}
+
+	function setGameStopwatch() {
+		function gameStopwatch() {
+			stopwatch += 1;
+
+			if (game === 'waiting for input' || stopwatch > 86400) {
+				clearInterval(interval);
+			}
+		}
+
+		const interval = setInterval(gameStopwatch, 1000);
 	}
 
 	async function getWords(limit: number) {
@@ -217,6 +250,10 @@
 			startGame();
 		}
 
+		if (gameMode === 'zen' && event.code === 'Enter') {
+			endGame();
+		}
+
 		// else if (letterIndex == words[wordIndex].length) {
 		// 	nextWord();
 		// }
@@ -226,6 +263,17 @@
 		seconds = time;
 		timer = seconds;
 		focusInput();
+	}
+
+	function setWordLimit(wordCount: number) {
+		wordLimit = wordCount;
+		stopwatch = 0;
+		focusInput();
+	}
+
+	function endGame() {
+		setGameState('game over');
+		getResults();
 	}
 
 	function sleep(ms: number | undefined) {
@@ -242,21 +290,25 @@
 	<div class="flex flex-row gap-2 justify-evenly text-center" data-game={game}>
 		{#if game !== 'in progress'}
 			<div class="gap-4 w-1/4">
-				<button
-					on:click={() => setWordMode('words')}
-					class={wordMode === 'words' ? 'selected' : ''}
-					tabindex="-1">words</button
-				>
-				<button
-					on:click={() => setWordMode('sentences')}
-					class={wordMode === 'sentences' ? 'selected' : ''}
-					tabindex="-1">sentences</button
-				>
-				<button
-					on:click={() => setWordMode('numbers')}
-					class={wordMode === 'numbers' ? 'selected' : ''}
-					tabindex="-1">numbers</button
-				>
+				{#if gameMode !== 'zen'}
+					<div in:blur out:blur>
+						<button
+							on:click={() => setWordMode('words')}
+							class={wordMode === 'words' ? 'selected' : ''}
+							tabindex="-1">words</button
+						>
+						<button
+							on:click={() => setWordMode('sentences')}
+							class={wordMode === 'sentences' ? 'selected' : ''}
+							tabindex="-1">sentences</button
+						>
+						<button
+							on:click={() => setWordMode('numbers')}
+							class={wordMode === 'numbers' ? 'selected' : ''}
+							tabindex="-1">numbers</button
+						>
+					</div>
+				{/if}
 			</div>
 			<div class="gap-4 w-1/4">
 				<!--
@@ -274,40 +326,80 @@
 				<button
 					on:click={() => setGameMode('words')}
 					class={gameMode === 'words' ? 'selected' : ''}
-					tabindex="-1"
-					disabled>words</button
+					tabindex="-1">words</button
 				>
-				<button
+				<!-- <button
 					on:click={() => setGameMode('quotes')}
 					class={gameMode === 'quotes' ? 'selected' : ''}
 					tabindex="-1"
 					disabled>quotes</button
-				>
+				> -->
 				<button
 					on:click={() => setGameMode('zen')}
 					class={gameMode === 'zen' ? 'selected' : ''}
-					tabindex="-1"
-					disabled>zen</button
+					tabindex="-1">zen</button
 				>
 			</div>
 			<div class="gap-4 w-1/4">
-				<button on:click={() => setTime(3)} class={seconds === 3 ? 'selected' : ''} tabindex="-1"
-					>3</button
-				>
-				<button on:click={() => setTime(15)} class={seconds === 15 ? 'selected' : ''} tabindex="-1"
-					>15</button
-				>
-				<button on:click={() => setTime(30)} class={seconds === 30 ? 'selected' : ''} tabindex="-1"
-					>30</button
-				>
-				<button on:click={() => setTime(60)} class={seconds === 60 ? 'selected' : ''} tabindex="-1"
-					>60</button
-				>
-				<button
-					on:click={() => setTime(120)}
-					class={seconds === 120 ? 'selected' : ''}
-					tabindex="-1">120</button
-				>
+				{#if gameMode !== 'zen'}
+					{#if gameMode === 'time'}
+						<div in:blur class="">
+							<button
+								on:click={() => setTime(3)}
+								class={seconds === 3 ? 'selected' : ''}
+								tabindex="-1">3</button
+							>
+							<button
+								on:click={() => setTime(15)}
+								class={seconds === 15 ? 'selected' : ''}
+								tabindex="-1">15</button
+							>
+							<button
+								on:click={() => setTime(30)}
+								class={seconds === 30 ? 'selected' : ''}
+								tabindex="-1">30</button
+							>
+							<button
+								on:click={() => setTime(60)}
+								class={seconds === 60 ? 'selected' : ''}
+								tabindex="-1">60</button
+							>
+							<button
+								on:click={() => setTime(120)}
+								class={seconds === 120 ? 'selected' : ''}
+								tabindex="-1">120</button
+							>
+						</div>
+					{:else if gameMode === 'words'}
+						<div in:blur class="relative">
+							<button
+								on:click={() => setWordLimit(10)}
+								class={wordLimit === 10 ? 'selected' : ''}
+								tabindex="-1">10</button
+							>
+							<button
+								on:click={() => setWordLimit(25)}
+								class={wordLimit === 25 ? 'selected' : ''}
+								tabindex="-1">25</button
+							>
+							<button
+								on:click={() => setWordLimit(50)}
+								class={wordLimit === 50 ? 'selected' : ''}
+								tabindex="-1">50</button
+							>
+							<button
+								on:click={() => setWordLimit(100)}
+								class={wordLimit === 100 ? 'selected' : ''}
+								tabindex="-1">100</button
+							>
+							<button
+								on:click={() => setWordLimit(250)}
+								class={wordLimit === 250 ? 'selected' : ''}
+								tabindex="-1">250</button
+							>
+						</div>
+					{/if}
+				{/if}
 			</div>
 		{/if}
 	</div>
@@ -323,7 +415,17 @@
 			tabindex="0"
 		/>
 
-		<div class="time">{timer}</div>
+		{#if gameMode === 'time'}
+			<div class="time">{timer}</div>
+		{:else if gameMode === 'words'}
+			<div class="time">{wordLimit - wordIndex}</div>
+		{:else if gameMode === 'zen'}
+			<div class="flex flex-row">
+				<div class="time">{stopwatch}</div>
+			</div>
+		{:else}
+			<div class="time" />
+		{/if}
 
 		{#key toggleReset}
 			<div in:blur|local bind:this={wordsEl} class="words">
@@ -337,9 +439,9 @@
 
 				<div bind:this={caretEl} class="caret" />
 			</div>
-			<button on:click={focusInput} style:margin-top="0.5rem" tabindex="-1"
+			<button on:click={focusInput} class="mt-2 mr-2" tabindex="-1"
 				>Click here to refocus input</button
-			>
+			>{#if gameMode === 'zen'}Press 'Enter' to end the game{/if}
 		{/key}
 
 		<div class="reset">
@@ -419,6 +521,7 @@
 
 		.time {
 			position: relative;
+			height: 2rem;
 			font-size: 1.5rem;
 			color: hsl(var(--er));
 			opacity: 0;
