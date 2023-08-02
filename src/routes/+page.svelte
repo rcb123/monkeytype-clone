@@ -95,11 +95,13 @@
 
 		if (typedLetter === currentLetter) {
 			letterEl.dataset.letter = 'correct';
+			letterEl.className = 'letter opacity-100';
 			increaseScore();
 		}
 
 		if (typedLetter !== currentLetter) {
 			letterEl.dataset.letter = 'incorrect';
+			letterEl.className = 'letter opacity-100 text-[hsl(var(--er))]';
 		}
 	}
 
@@ -447,14 +449,14 @@
 			opacity: 0.6;
 			transition: all 0.3s ease;
 
-			&:global([data-letter='correct']) {
-				opacity: 1;
-			}
+			// &:global([data-letter='correct']) {
+			// 	opacity: 1;
+			// }
 
-			&:global([data-letter='incorrect']) {
-				color: hsl(var(--er));
-				opacity: 1;
-			}
+			// &:global([data-letter='incorrect']) {
+			// 	color: hsl(var(--er));
+			// 	opacity: 1;
+			// }
 		}
 
 		.caret {
