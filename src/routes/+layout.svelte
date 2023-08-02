@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '../styles/app.scss';
+	import '../styles/app.css';
 	import Header from '$components/Header.svelte';
 </script>
 
@@ -9,7 +9,7 @@
 
 <Header />
 
-<div class="layout">
+<div class="p-8 h-full items-center">
 	<main>
 		<slot />
 	</main>
@@ -22,7 +22,7 @@
 	<a class="absolute right-10 bottom-5 text-lg" href="https://rezab.vercel.app/">🖥️ Portfolio</a>
 </div>
 
-<style lang="scss">
+<style>
 	/* lexend-deca-regular - latin */
 	@font-face {
 		font-family: 'Lexend Deca';
@@ -31,13 +31,5 @@
 		src: local(''),
 			url('$static/fonts/lexend-deca-v17-latin/lexend-deca-v17-latin-regular.woff2') format('woff2'),
 			url('$static/fonts/lexend-deca-v17-latin/lexend-deca-v17-latin-regular.woff') format('woff');
-	}
-
-	.layout {
-		height: 100%;
-		display: grid;
-		grid-template-rows: auto 1fr;
-		align-items: center;
-		padding: 2rem;
 	}
 </style>
