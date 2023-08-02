@@ -312,7 +312,7 @@
 		{/if}
 	</div>
 
-	<div class="game mr-4" data-game={game}>
+	<div class="game w-[95vw]" data-game={game}>
 		<input
 			bind:this={inputEl}
 			bind:value={typedLetter}
@@ -410,7 +410,7 @@
 
 	.game {
 		position: absolute;
-		top: 50vh;
+		top: 41vh;
 
 		.input {
 			position: absolute;
@@ -481,7 +481,7 @@
 
 	.results {
 		position: absolute;
-		top: 50vh;
+		top: 41vh;
 
 		.score {
 			font-size: 4rem;

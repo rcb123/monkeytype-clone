@@ -9,7 +9,7 @@
 </script>
 
 <nav>
-	<h1 class="mt-10 text-center text-primary">🔥 sveltype</h1>
+	<h1 class="pt-10 text-center text-primary">🔥 sveltype</h1>
 
 	<select
 		data-choose-theme
