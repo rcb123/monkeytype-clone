@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { tweened } from 'svelte/motion';
-	import { blur } from 'svelte/transition';
+	import { blur, fade } from 'svelte/transition';
 
 	type Game = 'waiting for input' | 'in progress' | 'game over';
 	type GameMode = 'time' | 'words' | 'quotes' | 'zen';
@@ -17,6 +17,7 @@
 	let wordLimit = 10;
 	let typedLetter = '';
 	let toggleReset = false;
+	let overlayVisible = false;
 
 	let words: Word[] = [];
 
@@ -161,7 +162,7 @@
 	}
 
 	function moveCaret() {
-		const offset = 4;
+		const offset = 2;
 		const { offsetLeft, offsetTop, offsetWidth } = letterEl;
 
 		caretEl.style.top = `${offsetTop + offset}px`;
@@ -231,6 +232,7 @@
 	}
 
 	async function focusInput() {
+		overlayVisible = false;
 		await sleep(1);
 		inputEl.focus();
 	}
@@ -283,6 +285,11 @@
 	onMount(async () => {
 		getWords(wordCount);
 		focusInput();
+		window.addEventListener('keydown', focusInput);
+
+		return () => {
+			window.removeEventListener('keydown', focusInput);
+		};
 	});
 </script>
 
@@ -410,10 +417,25 @@
 			bind:value={typedLetter}
 			on:input={updateGameState}
 			on:keydown={handleKeydown}
-			class="input"
+			on:mousedown={(e) => e.preventDefault()}
+			on:focus={() => (overlayVisible = false)}
+			on:blur={() => (overlayVisible = true)}
+			class="input p-0 w-full h-4/5 z-10 cursor-default"
 			type="text"
 			tabindex="0"
 		/>
+
+		{#if overlayVisible}
+			<div
+				tabindex="0"
+				on:mousedown={(e) => e.preventDefault()}
+				on:click={focusInput}
+				class="absolute inset-0 flex w-full h-full bg-base-100 bg-opacity-40 z-10 justify-center items-center cursor-default backdrop-blur-sm"
+				transition:fade
+			>
+				<p class="">Click here or start typing to focus</p>
+			</div>
+		{/if}
 
 		{#if gameMode === 'time'}
 			<div class="time">{timer}</div>
@@ -439,13 +461,13 @@
 
 				<div bind:this={caretEl} class="caret" />
 			</div>
-			<button on:click={focusInput} class="mt-2 mr-2" tabindex="-1"
-				>Click here to refocus input</button
-			>{#if gameMode === 'zen'}Press 'Enter' to end the game{/if}
+			<div class="mt-2 mr-2" tabindex="-1">
+				{#if gameMode === 'zen'}, Press 'Enter' to end the game{/if}
+			</div>
 		{/key}
 
 		<div class="reset">
-			<button on:click={resetGame} aria-label="reset" tabindex="-1">
+			<button on:click={resetGame} on:mousedown={(e) => e.preventDefault()} aria-label="reset" tabindex="-1">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="0 0 24 24"
@@ -565,10 +587,10 @@
 		.caret {
 			position: absolute;
 			height: 1.8rem;
-			top: 0;
-			border-right: 1px solid hsl(var(--er));
+			top: -1px;
+			border-right: 2px solid hsl(var(--er));
 			animation: caret 1s infinite;
-			transition: all 0.2s ease;
+			transition: all 0.3s ease;
 
 			@keyframes caret {
 				0%,
