@@ -426,6 +426,8 @@
 		/>
 
 		{#if overlayVisible}
+			<!-- svelte-ignore a11y-click-events-have-key-events -->
+			<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 			<div
 				tabindex="0"
 				on:mousedown={(e) => e.preventDefault()}
@@ -462,7 +464,7 @@
 				<div bind:this={caretEl} class="caret" />
 			</div>
 			<div class="mt-2 mr-2" tabindex="-1">
-				{#if gameMode === 'zen'}, Press 'Enter' to end the game{/if}
+				{#if gameMode === 'zen'}Press 'Enter' to end the game{/if}
 			</div>
 		{/key}
 
