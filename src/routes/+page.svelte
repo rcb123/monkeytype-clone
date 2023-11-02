@@ -6,9 +6,8 @@
 	type Game = 'waiting for input' | 'in progress' | 'game over';
 	type GameMode = 'time' | 'words' | 'quotes' | 'zen';
 	type WordMode = 'words' | 'sentences' | 'numbers';
-	type Word = string;
 
-	let game: Game = 'waiting for input';
+	let gameStatus: Game = 'waiting for input';
 	let gameMode: GameMode = 'time';
 	let wordMode: WordMode = 'words';
 	let seconds = 15;
@@ -16,17 +15,12 @@
 	let stopwatch = 0;
 	let wordLimit = 10;
 	let typedLetter = '';
-	let toggleReset = false;
-	let overlayVisible = false;
-
-	let words: Word[] = [];
-
-	let wordCount = 100;
+	let words: string[] = [];
 	let wordIndex = 0;
-	let letterIndex = 0;
+	let letterIndex = 0; // Since the letter index starts at 0, the first letter is technically at index 1
 	let correctLetters = 0;
 	let totalLettersTyped = 0;
-
+	let currentInput = '';
 	let wordsPerMinute = tweened(0, { delay: 300, duration: 1000 });
 	let accuracy = tweened(0, { delay: 1300, duration: 1000 });
 
@@ -35,115 +29,109 @@
 	let inputEl: HTMLInputElement;
 	let caretEl: HTMLDivElement;
 
-	function getWordsPerMinute() {
-		const word = 5;
+	let toggleReset = false;
+	let overlayVisible = false;
+
+	onMount(async () => {
+		await getWords(100);
+		focusInput();
+		window.addEventListener('keydown', focusInput);
+		return () => window.removeEventListener('keydown', focusInput);
+	});
+
+	async function getWords(limit: number) {
+		const response = await fetch(`/api/words?mode=${wordMode}&limit=${limit}`);
+		words = await response.json();
+	}
+
+	function startGame() {
+		gameStatus = 'in progress';
 		if (gameMode === 'time') {
-			const minutes = seconds / 60;
-			return Math.floor(correctLetters / word / minutes);
-		} else if (gameMode === 'words') {
-			const minutes = stopwatch / 60;
-			return Math.floor(correctLetters / word / minutes);
-		} else if (gameMode === 'zen') {
-			const minutes = stopwatch / 60;
-			return Math.floor(correctLetters / word / minutes);
+			startTimer();
 		} else {
-			return 999;
+			startStopwatch();
 		}
 	}
 
-	function getAccuracy() {
-		if (totalLettersTyped === 0) {
-			return 0;
-		}
-		return Math.floor((correctLetters / totalLettersTyped) * 100);
+	function startTimer() {
+		const interval = setInterval(() => {
+			if (timer > 0) timer--;
+			if (gameStatus !== 'in progress' || timer === 0) {
+				clearInterval(interval);
+				if (timer === 0) endGame();
+			}
+		}, 1000);
 	}
 
-	function getTotalLetters(words: Word[]) {
-		return words.reduce((count, word) => count + word.length, 0);
+	function startStopwatch() {
+		const interval = setInterval(() => {
+			stopwatch++;
+			if (gameStatus !== 'in progress' || stopwatch > 9999) {
+				clearInterval(interval);
+			}
+		}, 1000);
 	}
 
-	function getResults() {
-		$wordsPerMinute = getWordsPerMinute();
-		$accuracy = getAccuracy();
+	function endGame() {
+		gameStatus = 'game over';
+		calculateResults();
+	}
+
+	function calculateResults() {
+		$wordsPerMinute = calculateWPM();
+		$accuracy = calculateAccuracy();
+	}
+
+	function calculateWPM() {
+		const wordLength = 5;
+		const minutes = (gameMode === 'time' ? timer : stopwatch) / 60;
+		return minutes ? Math.floor(correctLetters / wordLength / minutes) : 0;
+	}
+
+	function calculateAccuracy() {
+		return totalLettersTyped ? Math.floor((correctLetters / totalLettersTyped) * 100) : 0;
 	}
 
 	async function resetGame() {
 		toggleReset = !toggleReset;
-
-		setGameState('waiting for input');
-		getWords(wordCount);
-
+		getWords(100);
+		gameStatus = 'waiting for input';
 		timer = seconds;
 		stopwatch = 0;
-		typedLetter = '';
 		wordIndex = 0;
 		letterIndex = 0;
 		correctLetters = 0;
 		totalLettersTyped = 0;
-
+		typedLetter = '';
+		currentInput = '';
 		$wordsPerMinute = 0;
 		$accuracy = 0;
-
 		focusInput();
 	}
 
+	async function focusInput() {
+		overlayVisible = false;
+		await sleep(0);
+		inputEl.focus();
+	}
+
 	function updateGameState() {
-		setLetter();
-		checkLetter();
-		nextLetter();
+		// checkLetter();
 		updateLine();
 		moveCaret();
 		resetLetter();
 	}
 
-	function setLetter() {
-		const isWordCompleted = letterIndex > words[wordIndex].length - 1;
-
-		if (!isWordCompleted) {
-			letterEl = wordsEl.children[wordIndex].children[letterIndex] as HTMLSpanElement;
-		}
-	}
-
 	function checkLetter() {
-		const currentLetter = words[wordIndex][letterIndex];
+		const correctLetter = words[wordIndex][letterIndex - 1];
 
-		if (typedLetter === currentLetter) {
+		if (typedLetter === correctLetter) {
 			letterEl.dataset.letter = 'correct';
 			letterEl.className = 'letter opacity-100';
-			increaseScore();
-		}
-
-		if (typedLetter !== currentLetter) {
+			correctLetters++;
+		} else {
 			letterEl.dataset.letter = 'incorrect';
 			letterEl.className = 'letter opacity-100 text-[hsl(var(--er))]';
-		}
-	}
-
-	function increaseScore() {
-		correctLetters += 1;
-	}
-
-	function nextLetter() {
-		totalLettersTyped += 1;
-		letterIndex += 1;
-	}
-
-	function nextWord() {
-		const isNotFirstLetter = letterIndex !== 0;
-		const isOneLetterWord = words[wordIndex].length === 1;
-
-		if (isNotFirstLetter || isOneLetterWord) {
-			wordIndex += 1;
-			totalLettersTyped += 1;
-			letterIndex = 0;
-			increaseScore();
-			moveCaret();
-		}
-
-		if (gameMode === 'words') {
-			if (wordIndex === wordLimit) {
-				endGame();
-			}
 		}
 	}
 
@@ -157,31 +145,94 @@
 		}
 	}
 
-	function resetLetter() {
-		typedLetter = '';
-	}
-
 	function moveCaret() {
+		// In the event the caret is moved back to the starting position and the letter is undefined
+		if (!letterEl) {
+			console.log("Letter element doesn't exist, moving caret to starting position");
+			caretEl.style.top = `-4px`;
+			caretEl.style.left = `0px`;
+			return;
+		}
+
 		const offset = 2;
 		const { offsetLeft, offsetTop, offsetWidth } = letterEl;
 
+		console.log('Moving Caret to: ' + offsetLeft + ', ' + offsetTop);
 		caretEl.style.top = `${offsetTop + offset}px`;
 		caretEl.style.left = `${offsetLeft + offsetWidth}px`;
 	}
 
-	function startGame() {
-		setGameState('in progress');
-		if (gameMode === 'time') {
-			setGameTimer();
-		} else if (gameMode === 'words') {
-			setGameStopwatch();
-		} else if (gameMode === 'zen') {
-			setGameStopwatch();
+	function setCaret() {
+		// In the event the caret is moved back to the starting position and the letter is undefined
+		if (!letterEl) {
+			console.log("Letter element doesn't exist, moving caret to starting position");
+			caretEl.style.top = `-4px`;
+			caretEl.style.left = `0px`;
+			return;
+		}
+
+		const offset = 2;
+		const { offsetLeft, offsetTop } = letterEl;
+
+		console.log('Moving Caret to: ' + offsetLeft + ', ' + offsetTop);
+		caretEl.style.top = `${offsetTop + offset}px`;
+		caretEl.style.left = `${offsetLeft}px`;
+	}
+
+	function setLetter() {
+		const isWordCompleted = letterIndex > words[wordIndex].length - 1;
+
+		if (!isWordCompleted) {
+			console.log(
+				"Word isn't completed, setting letter element to index " +
+					letterIndex +
+					' of word ' +
+					wordIndex
+			);
+			letterEl = wordsEl.children[wordIndex].children[letterIndex] as HTMLSpanElement;
+		} else {
+			console.log('Word completed, moving to next word');
+			nextWord();
+			// TODO: Error for the space that wasn't pressed
 		}
 	}
 
-	function setGameState(state: Game) {
-		game = state;
+	function resetLetter() {
+		typedLetter = '';
+	}
+
+	function nextLetter() {
+		totalLettersTyped += 1;
+		letterIndex += 1;
+	}
+
+	function prevLetter() {
+		totalLettersTyped = totalLettersTyped > 0 ? totalLettersTyped - 1 : 0;
+		letterIndex -= 1;
+	}
+
+	function nextWord() {
+		const isNotFirstLetter = letterIndex !== 0;
+		console.log('isNotFirstLetter: ' + isNotFirstLetter);
+
+		const isOneLetterWord = words[wordIndex].length === 1;
+		console.log('isOneLetterWord: ' + isOneLetterWord);
+
+		if (isNotFirstLetter || isOneLetterWord) {
+			console.log('Increasing word index');
+			wordIndex++;
+			totalLettersTyped++;
+			correctLetters++;
+			letterIndex = 0;
+			setLetter();
+			setCaret();
+		}
+
+		if (gameMode === 'words') {
+			if (wordIndex === wordLimit) {
+				endGame();
+			}
+		}
 	}
 
 	function setGameMode(mode: GameMode) {
@@ -191,74 +242,93 @@
 
 	function setWordMode(mode: WordMode) {
 		wordMode = mode;
-		getWords(wordCount);
+		getWords(100);
 		focusInput();
 	}
 
-	function setGameTimer() {
-		function gameTimer() {
-			if (timer > 0) {
-				timer -= 1;
-			}
-
-			if (game === 'waiting for input' || timer === 0) {
-				clearInterval(interval);
-			}
-
-			if (timer === 0) {
-				endGame();
-			}
-		}
-
-		const interval = setInterval(gameTimer, 1000);
-	}
-
-	function setGameStopwatch() {
-		function gameStopwatch() {
-			stopwatch += 1;
-
-			if (game === 'waiting for input' || stopwatch > 86400) {
-				clearInterval(interval);
-			}
-		}
-
-		const interval = setInterval(gameStopwatch, 1000);
-	}
-
-	async function getWords(limit: number) {
-		const response = await fetch(`/api/words?mode=${wordMode}&limit=${limit}`);
-		words = await response.json();
-		console.log(words);
-	}
-
-	async function focusInput() {
-		overlayVisible = false;
-		await sleep(1);
-		inputEl.focus();
-	}
-
+	/**
+	 * Handle keydown events
+	 * If the space key is pressed, move to the next word
+	 * If the backspace key is pressed, remove the last character
+	 * If any other key is pressed, add the character to the input
+	 * If the game is in zen mode and the enter key is pressed, end the game
+	 * If the game hasn't started yet and a character is pressed, start the game
+	 * @param event
+	 */
 	function handleKeydown(event: KeyboardEvent) {
+		// Check if the key pressed is a character
 		const isChar = event.key.length === 1;
 
-		if (event.code === 'Space') {
-			event.preventDefault();
-
-			if (game === 'in progress') {
-				nextWord();
-			}
-		}
-
-		if (game === 'waiting for input' && isChar) {
+		// Start the game if it hasn't started yet
+		if (gameStatus === 'waiting for input' && isChar) {
 			startGame();
 		}
 
+		console.log('Key pressed: ' + event.key);
+
+		switch (event.key) {
+			case ' ':
+				// If the space key is pressed, move to the next word
+				console.log('Space key pressed');
+				event.preventDefault();
+				if (gameStatus === 'in progress' && isWordCompleted()) {
+					nextWord();
+				}
+				break;
+			case 'Backspace':
+				// If the backspace key is pressed, remove the last character
+				removeCharacter();
+				break;
+			default:
+				// If any other key is pressed, add the character to the input
+				if (isChar) {
+					addCharacter(event.key);
+				}
+				break;
+		}
+
+		// If the game is in zen mode and the enter key is pressed, end the game
 		if (gameMode === 'zen' && event.code === 'Enter') {
 			endGame();
 		}
+	}
 
-		// else if (letterIndex == words[wordIndex].length) {
-		// 	nextWord();
-		// }
+	function isWordCompleted() {
+		return letterIndex >= words[wordIndex].length;
+	}
+
+	function addCharacter(character: string) {
+		typedLetter = character; // Set the current letter being typed
+		currentInput += character; // Append the new character
+		setLetter(); // Set the current letter element
+		nextLetter(); // Increment the letter index
+		checkLetter(); // Check if the letter is correct
+		updateGameState(); // Refresh the game state
+	}
+
+	function removeCharacter() {
+		if (letterIndex > 0) {
+			currentInput = currentInput.slice(0, -1); // Remove last character
+			console.log('Removing character at index ' + letterIndex + ' of word ' + wordIndex);
+			clearLetterStyling();
+			prevLetter();
+			console.log('New letter index: ' + letterIndex);
+			setLetter();
+			updateLine();
+			setCaret();
+			resetLetter();
+		}
+	}
+
+	function clearLetterStyling() {
+		letterEl = wordsEl.children[wordIndex].children[letterIndex - 1] as HTMLSpanElement; // Gross solution
+		if (letterEl) {
+			if (letterEl.dataset.letter === 'correct') {
+				correctLetters -= 1;
+			}
+			letterEl.dataset.letter = '';
+			letterEl.className = 'letter opacity-60';
+		}
 	}
 
 	function setTime(time: number) {
@@ -273,29 +343,14 @@
 		focusInput();
 	}
 
-	function endGame() {
-		setGameState('game over');
-		getResults();
-	}
-
 	function sleep(ms: number | undefined) {
 		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
-
-	onMount(async () => {
-		getWords(wordCount);
-		focusInput();
-		window.addEventListener('keydown', focusInput);
-
-		return () => {
-			window.removeEventListener('keydown', focusInput);
-		};
-	});
 </script>
 
-{#if game !== 'game over'}
-	<div class="flex flex-row gap-2 justify-evenly text-center" data-game={game}>
-		{#if game !== 'in progress'}
+{#if gameStatus !== 'game over'}
+	<div class="flex flex-row gap-2 justify-evenly text-center" data-game={gameStatus}>
+		{#if gameStatus !== 'in progress'}
 			<div class="gap-4 w-1/4">
 				{#if gameMode !== 'zen'}
 					<div in:blur out:blur>
@@ -318,13 +373,6 @@
 				{/if}
 			</div>
 			<div class="gap-4 w-1/4">
-				<!--
-				<div class="relative">
-					<p class="text-xs w-full text-gray-100 top-12 absolute">
-						Only time gamemode is implemented!!
-					</p>
-				</div>
-				-->
 				<button
 					on:click={() => setGameMode('time')}
 					class={gameMode === 'time' ? 'selected' : ''}
@@ -335,6 +383,7 @@
 					class={gameMode === 'words' ? 'selected' : ''}
 					tabindex="-1">words</button
 				>
+				<!-- TODO: Populate quotes set and implement mode properly-->
 				<!-- <button
 					on:click={() => setGameMode('quotes')}
 					class={gameMode === 'quotes' ? 'selected' : ''}
@@ -411,11 +460,10 @@
 		{/if}
 	</div>
 
-	<div class="game w-[95vw]" data-game={game}>
+	<div class="game w-[95vw]" data-game={gameStatus}>
 		<input
 			bind:this={inputEl}
 			bind:value={typedLetter}
-			on:input={updateGameState}
 			on:keydown={handleKeydown}
 			on:mousedown={(e) => e.preventDefault()}
 			on:focus={() => (overlayVisible = false)}
@@ -469,7 +517,12 @@
 		{/key}
 
 		<div class="reset">
-			<button on:click={resetGame} on:mousedown={(e) => e.preventDefault()} aria-label="reset" tabindex="-1">
+			<button
+				on:click={resetGame}
+				on:mousedown={(e) => e.preventDefault()}
+				aria-label="reset"
+				tabindex="-1"
+			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="0 0 24 24"
@@ -490,7 +543,7 @@
 	</div>
 {/if}
 
-{#if game === 'game over'}
+{#if gameStatus === 'game over'}
 	<div in:blur class="results">
 		<div>
 			<p class="text-4xl">wpm</p>
@@ -575,21 +628,12 @@
 		.letter {
 			opacity: 0.6;
 			transition: all 0.3s ease;
-
-			// &:global([data-letter='correct']) {
-			// 	opacity: 1;
-			// }
-
-			// &:global([data-letter='incorrect']) {
-			// 	color: hsl(var(--er));
-			// 	opacity: 1;
-			// }
 		}
 
 		.caret {
 			position: absolute;
 			height: 1.8rem;
-			top: -1px;
+			top: -4px;
 			border-right: 2px solid hsl(var(--er));
 			animation: caret 1s infinite;
 			transition: all 0.3s ease;
