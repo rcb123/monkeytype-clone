@@ -84,7 +84,11 @@
 
 	function calculateWPM() {
 		const wordLength = 5;
-		const minutes = (gameMode === 'time' ? timer : stopwatch) / 60;
+		// console.log(gameMode === 'time' ? seconds : stopwatch)
+		const minutes = (gameMode === 'time' ? seconds : stopwatch) / 60;
+		// console.log('correctLetters: ' + correctLetters);
+		// console.log('wordLength: ' + wordLength);
+		// console.log('minutes: ' + minutes);
 		return minutes ? Math.floor(correctLetters / wordLength / minutes) : 0;
 	}
 
@@ -148,7 +152,7 @@
 	function moveCaret() {
 		// In the event the caret is moved back to the starting position and the letter is undefined
 		if (!letterEl) {
-			console.log("Letter element doesn't exist, moving caret to starting position");
+			// console.log("Letter element doesn't exist, moving caret to starting position");
 			caretEl.style.top = `-4px`;
 			caretEl.style.left = `0px`;
 			return;
@@ -157,7 +161,7 @@
 		const offset = 2;
 		const { offsetLeft, offsetTop, offsetWidth } = letterEl;
 
-		console.log('Moving Caret to: ' + offsetLeft + ', ' + offsetTop);
+		// console.log('Moving Caret to: ' + offsetLeft + ', ' + offsetTop);
 		caretEl.style.top = `${offsetTop + offset}px`;
 		caretEl.style.left = `${offsetLeft + offsetWidth}px`;
 	}
@@ -165,7 +169,7 @@
 	function setCaret() {
 		// In the event the caret is moved back to the starting position and the letter is undefined
 		if (!letterEl) {
-			console.log("Letter element doesn't exist, moving caret to starting position");
+			// console.log("Letter element doesn't exist, moving caret to starting position");
 			caretEl.style.top = `-4px`;
 			caretEl.style.left = `0px`;
 			return;
@@ -183,15 +187,15 @@
 		const isWordCompleted = letterIndex > words[wordIndex].length - 1;
 
 		if (!isWordCompleted) {
-			console.log(
-				"Word isn't completed, setting letter element to index " +
-					letterIndex +
-					' of word ' +
-					wordIndex
-			);
+			// console.log(
+			// 	"Word isn't completed, setting letter element to index " +
+			// 		letterIndex +
+			// 		' of word ' +
+			// 		wordIndex
+			// );
 			letterEl = wordsEl.children[wordIndex].children[letterIndex] as HTMLSpanElement;
 		} else {
-			console.log('Word completed, moving to next word');
+			// console.log('Word completed, moving to next word');
 			nextWord();
 			// TODO: Error for the space that wasn't pressed
 		}
@@ -213,13 +217,13 @@
 
 	function nextWord() {
 		const isNotFirstLetter = letterIndex !== 0;
-		console.log('isNotFirstLetter: ' + isNotFirstLetter);
+		// console.log('isNotFirstLetter: ' + isNotFirstLetter);
 
 		const isOneLetterWord = words[wordIndex].length === 1;
-		console.log('isOneLetterWord: ' + isOneLetterWord);
+		// console.log('isOneLetterWord: ' + isOneLetterWord);
 
 		if (isNotFirstLetter || isOneLetterWord) {
-			console.log('Increasing word index');
+			// console.log('Increasing word index');
 			wordIndex++;
 			totalLettersTyped++;
 			correctLetters++;
@@ -264,12 +268,12 @@
 			startGame();
 		}
 
-		console.log('Key pressed: ' + event.key);
+		// console.log('Key pressed: ' + event.key);
 
 		switch (event.key) {
 			case ' ':
 				// If the space key is pressed, move to the next word
-				console.log('Space key pressed');
+				// console.log('Space key pressed');
 				event.preventDefault();
 				if (gameStatus === 'in progress' && isWordCompleted()) {
 					nextWord();
@@ -309,10 +313,10 @@
 	function removeCharacter() {
 		if (letterIndex > 0) {
 			currentInput = currentInput.slice(0, -1); // Remove last character
-			console.log('Removing character at index ' + letterIndex + ' of word ' + wordIndex);
+			// console.log('Removing character at index ' + letterIndex + ' of word ' + wordIndex);
 			clearLetterStyling();
 			prevLetter();
-			console.log('New letter index: ' + letterIndex);
+			// console.log('New letter index: ' + letterIndex);
 			setLetter();
 			updateLine();
 			setCaret();
