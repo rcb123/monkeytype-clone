@@ -9,7 +9,7 @@
 
 <Header />
 
-<div class="p-8 h-full items-center">
+<div class="p-8 h-full">
 	<main>
 		<slot />
 	</main>

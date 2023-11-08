@@ -464,7 +464,7 @@
 		{/if}
 	</div>
 
-	<div class="game w-[95vw]" data-game={gameStatus}>
+	<div class="game" data-game={gameStatus}>
 		<input
 			bind:this={inputEl}
 			bind:value={typedLetter}
@@ -594,6 +594,10 @@
 	.game {
 		position: absolute;
 		top: 41vh;
+		left: 50%;
+        transform: translateX(-50%);
+		width: calc(100% - 2 * clamp(32px, 8vw, 200px)); // Adjust 100px as needed
+        padding: 0 clamp(4px, 2vw, 12px); // If you need padding instead of margin
 
 		.input {
 			position: absolute;
